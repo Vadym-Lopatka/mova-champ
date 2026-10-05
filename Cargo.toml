@@ -53,7 +53,7 @@ rustc-hash = "2"
 # dependency of the crate itself.
 ropey = "1"
 # Benchmark competitor for PVector: imbl::Vector, an RRB tree. Dev-only.
-imbl = "3"
+imbl = "7"
 
 [[bench]]
 name = "champ"
