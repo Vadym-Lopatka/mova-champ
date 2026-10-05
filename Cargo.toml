@@ -1,0 +1,76 @@
+[package]
+name = "champ"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+description = "CHAMP (Compressed Hash-Array Mapped Prefix-tree) persistent hash map and set — fast, memory-light, Clojure-compatible semantics"
+license = "EPL-1.0"
+repository = "https://github.com/Vadym-Lopatka/mova-champ"
+
+[dependencies]
+# spike-ropey (see src/text_ropey.rs): `RopeyText`, `ropey` behind `PText`'s
+# exact public API, so the two engines can be compared head-to-head on the
+# existing model tests and criterion benches. Optional — never pulled into
+# a normal build unless the `spike-ropey` feature is on.
+ropey = { version = "1", optional = true }
+
+[features]
+default = ["pool-alloc"]
+# Thread-local node-pool allocator: recycles freed
+# node allocations instead of round-tripping every growth/shrink realloc
+# through the system allocator. DEFAULT ON; `--no-default-features` restores
+# the plain system allocator (also useful under Miri, which can be fussy
+# about `thread_local!` + raw-pointer free lists).
+pool-alloc = []
+# Exposes `PersistentHashMap::validate`, the canonical-form invariant
+# checker, outside of unit tests. Unit tests inside this crate get it for
+# free via `cfg(test)`; the self-referencing dev-dependency below enables
+# this feature for integration tests under `tests/`, which link against the
+# library built as an ordinary (non-`cfg(test)`) dependency.
+validate = []
+# SPIKE (see src/text_ropey.rs): exposes `RopeyText`, ropey wearing PText's
+# exact public API, for head-to-head comparison against PText on the
+# existing model tests and criterion benches. Off by default; touches no
+# existing behavior when disabled.
+spike-ropey = ["dep:ropey"]
+
+[dev-dependencies]
+# `default-features = false` here matters: without it, this self-dependency
+# edge always requests `default` (pool-alloc ON) regardless of what flags a
+# `cargo test`/`cargo bench` invocation passes, because Cargo's feature
+# resolution unions every activation edge for a given package id — including
+# a package's own dev-dependency on itself — so `--no-default-features` at
+# the top level would otherwise be silently overridden back to "on" by this
+# edge. With it, this edge only hard-requires `validate`; `pool-alloc`
+# follows whatever the top-level invocation actually asked for.
+champ = { path = ".", default-features = false, features = ["validate"] }
+proptest = "1"
+criterion = "0.5"
+im = "15"
+rustc-hash = "2"
+# Benchmark competitor for PText: the mutable
+# state-of-the-art rope, i.e. our speed ceiling. Dev-only — never a runtime
+# dependency of the crate itself.
+ropey = "1"
+# Benchmark competitor for PVector: imbl::Vector, an RRB tree. Dev-only.
+imbl = "3"
+
+[[bench]]
+name = "champ"
+harness = false
+
+[[bench]]
+name = "text"
+harness = false
+
+[[bench]]
+name = "vec"
+harness = false
+
+[profile.bench]
+lto = "thin"
+codegen-units = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
