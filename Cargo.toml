@@ -45,7 +45,7 @@ spike-ropey = ["dep:ropey"]
 # follows whatever the top-level invocation actually asked for.
 champ = { path = ".", default-features = false, features = ["validate"] }
 proptest = "1"
-criterion = "0.5"
+criterion = "0.8"
 im = "15"
 rustc-hash = "2"
 # Benchmark competitor for PText: the mutable
